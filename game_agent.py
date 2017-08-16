@@ -5,19 +5,16 @@ and include the results in your report.
 import random
 import math
 
+
 class SearchTimeout(Exception):
     """Subclass base exception for code clarity. """
     pass
 
 
-def custom_score(game, player):
-    """Calculate the heuristic value of a game state from the point of view
-    of the given player.
-
-    This should be the best heuristic function for your project submission.
-
-    Note: this function should be called from within a Player instance as
-    `self.score()` -- you should not need to call this function directly.
+def improved_adversary_score(game, player):
+    """The "Improved" evaluation function outputs a score equal to the
+    difference between agent's moves and the square of its opponent's
+    moves.
 
     Parameters
     ----------
@@ -25,14 +22,15 @@ def custom_score(game, player):
         An instance of `isolation.Board` encoding the current state of the
         game (e.g., player locations and blocked cells).
 
-    player : object
-        A player instance in the current game (i.e., an object corresponding to
-        one of the player objects `game.__player_1__` or `game.__player_2__`.)
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
 
     Returns
-    -------
+    ----------
     float
-        The heuristic value of the current game state to the specified player.
+        The heuristic value of the current game state
     """
     if game.is_loser(player):
         return float("-inf")
@@ -45,12 +43,10 @@ def custom_score(game, player):
     return float(own_moves - opp_moves ** 2)
 
 
-def custom_score_2(game, player):
-    """Calculate the heuristic value of a game state from the point of view
-    of the given player.
-
-    Note: this function should be called from within a Player instance as
-    `self.score()` -- you should not need to call this function directly.
+def improved_agent_score(game, player):
+    """The "Improved" evaluation function outputs a score equal to the
+    difference between the square of the agent's moves and its
+    opponent's moves.
 
     Parameters
     ----------
@@ -58,14 +54,15 @@ def custom_score_2(game, player):
         An instance of `isolation.Board` encoding the current state of the
         game (e.g., player locations and blocked cells).
 
-    player : object
-        A player instance in the current game (i.e., an object corresponding to
-        one of the player objects `game.__player_1__` or `game.__player_2__`.)
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
 
     Returns
-    -------
+    ----------
     float
-        The heuristic value of the current game state to the specified player.
+        The heuristic value of the current game state
     """
     if game.is_loser(player):
         return float("-inf")
@@ -73,46 +70,224 @@ def custom_score_2(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    w, h = game.width / 2., game.height / 2.
-    y, x = game.get_player_location(player)
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    moves = own_moves - opp_moves ** 2
+    return float(own_moves ** 2 - opp_moves)
 
-    return float((h - y) ** 2 + (w - x) ** 2 + moves)
+
+def center_adversary_score(game, player):
+    """Outputs a score equal to square of the distance from the center of the
+    board to the position of the player summed to the result of the
+    improved_adversary_score.
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
+
+    Returns
+    ----------
+    float
+        The heuristic value of the current game state
+    """
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+
+    w, h = game.width / 2., game.height / 2.
+    y, x = game.get_player_location(player)
+    return float((h - y) ** 2 + (w - x) ** 2 + (own_moves - opp_moves ** 2))
+
+
+def center_agent_score(game, player):
+    """Outputs a score equal to square of the distance from the center of the
+    board to the position of the player summed to the result of the
+    improved_agent_score.
+
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
+
+    Returns
+    ----------
+    float
+        The heuristic value of the current game state
+    """
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+
+    w, h = game.width / 2., game.height / 2.
+    y, x = game.get_player_location(player)
+    return float((h - y) ** 2 + (w - x) ** 2 + (own_moves ** 2 - opp_moves))
+
+
+def ratio_agent_score(game, player):
+    """Outputs a score ratio between the agent's and the opponent's possible
+    moves.
+
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
+
+    Returns
+    ----------
+    float
+        The heuristic value of the current game state
+    """
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    if opp_moves == 0:
+        return float("inf")
+    return float(own_moves / float(opp_moves))
+
+
+def ratio_adversay_score(game, player):
+    """Outputs a score ratio between the agent's and the opponent's possible
+    moves.
+
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
+
+    Returns
+    ----------
+    float
+        The heuristic value of the current game state
+    """
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    if own_moves == 0:
+        return float("-inf")
+    return float(opp_moves / float(own_moves))
+
+
+def custom_score(game, player):
+    """Calculate the heuristic value of a game state from the point of view
+        of the given player.
+
+        Note: this function should be called from within a Player instance as
+        `self.score()` -- you should not need to call this function directly.
+
+        Parameters
+        ----------
+        game : `isolation.Board`
+            An instance of `isolation.Board` encoding the current state of the
+            game (e.g., player locations and blocked cells).
+
+        player : object
+            A player instance in the current game (i.e., an object corresponding to
+            one of the player objects `game.__player_1__` or `game.__player_2__`.)
+
+        Returns
+        -------
+        float
+            The heuristic value of the current game state to the specified player.
+        """
+
+    return center_agent_score(game, player)
+
+
+def custom_score_2(game, player):
+    """Calculate the heuristic value of a game state from the point of view
+        of the given player.
+
+        Note: this function should be called from within a Player instance as
+        `self.score()` -- you should not need to call this function directly.
+
+        Parameters
+        ----------
+        game : `isolation.Board`
+            An instance of `isolation.Board` encoding the current state of the
+            game (e.g., player locations and blocked cells).
+
+        player : object
+            A player instance in the current game (i.e., an object corresponding to
+            one of the player objects `game.__player_1__` or `game.__player_2__`.)
+
+        Returns
+        -------
+        float
+            The heuristic value of the current game state to the specified player.
+        """
+    return improved_agent_score(game, player)
 
 
 def custom_score_3(game, player):
     """Calculate the heuristic value of a game state from the point of view
-    of the given player.
+        of the given player.
 
-    Note: this function should be called from within a Player instance as
-    `self.score()` -- you should not need to call this function directly.
+        Note: this function should be called from within a Player instance as
+        `self.score()` -- you should not need to call this function directly.
 
-    Parameters
-    ----------
-    game : `isolation.Board`
-        An instance of `isolation.Board` encoding the current state of the
-        game (e.g., player locations and blocked cells).
+        Parameters
+        ----------
+        game : `isolation.Board`
+            An instance of `isolation.Board` encoding the current state of the
+            game (e.g., player locations and blocked cells).
 
-    player : object
-        A player instance in the current game (i.e., an object corresponding to
-        one of the player objects `game.__player_1__` or `game.__player_2__`.)
+        player : object
+            A player instance in the current game (i.e., an object corresponding to
+            one of the player objects `game.__player_1__` or `game.__player_2__`.)
 
-    Returns
-    -------
-    float
-        The heuristic value of the current game state to the specified player.
-    """
-    if game.is_loser(player):
-        return float("-inf")
-
-    if game.is_winner(player):
-        return float("inf")
-
-    own_moves = len(game.get_legal_moves(player))
-    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    return float(own_moves **2 - opp_moves )
+        Returns
+        -------
+        float
+            The heuristic value of the current game state to the specified player.
+        """
+    return ratio_agent_score(game, player)
 
 
 class IsolationPlayer:
@@ -138,7 +313,7 @@ class IsolationPlayer:
         timer expires.
     """
 
-    def __init__(self, search_depth=3, score_fn=custom_score, timeout=15):
+    def __init__(self, search_depth=4, score_fn=custom_score, timeout=5):
         self.search_depth = search_depth
         self.score = score_fn
         self.time_left = None
@@ -293,6 +468,7 @@ class MinimaxPlayer(IsolationPlayer):
 
         # Return the best score
         return max(scores)
+
 
 class AlphaBetaPlayer(IsolationPlayer):
     """Game-playing agent that chooses a move using iterative deepening minimax
